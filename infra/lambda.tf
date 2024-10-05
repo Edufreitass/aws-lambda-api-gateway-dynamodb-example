@@ -41,6 +41,7 @@ resource "aws_lambda_function" "demo_lambda" {
   handler          = "lambda_function.lambda_handler"
   runtime          = "python3.12"
   memory_size      = "128" #MB
+  timeout          = 15    #sec
   filename         = data.archive_file.demo_lambda_zip.output_path
   source_code_hash = data.archive_file.demo_lambda_zip.output_base64sha256
 
