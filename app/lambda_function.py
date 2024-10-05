@@ -1,9 +1,8 @@
 import json
 
 from aws_lambda_powertools import Logger, Tracer
-
-from repositories import dynamo_repository
-from services import cep_service
+from repositories.dynamodb_repository import insert_item
+from services.cep_lookup_service import lookup_cep
 
 logger = Logger()
 tracer = Tracer()
@@ -12,16 +11,21 @@ tracer = Tracer()
 @tracer.capture_lambda_handler
 @logger.inject_lambda_context(log_event=True)
 def lambda_handler(event, context):
-    logger.info("Iniciando lambda..")
+    logger.info("Starting lambda execution...")
+    
     try:
-        cep_response = cep_service.consulta(event)
-        response = dynamo_repository.insert(cep_response)
+        cep_response = lookup_cep(event)
+        response = insert_item(cep_response)
     except Exception as e:
-        print(e)
+        logger.error(f"An error occurred: {e}")
+        return {
+            "statusCode": 500,
+            "body": json.dumps({"message": "Internal server error"})
+        }
     else:
         return {
             "statusCode": 200,
             "body": json.dumps(response)
         }
     finally:
-        logger.info("Finalizando lambda..")
+        logger.info("Lambda execution finished.")
